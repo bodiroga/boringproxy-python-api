@@ -17,7 +17,7 @@ setup_args = dict(
     author="Aitor Iturrioz",
     author_email="riturrioz@gmail.com",
     classifiers=[
-        "Development Status :: 3 - Alpha"
+        "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3"
     ],
