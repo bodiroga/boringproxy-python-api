@@ -8,7 +8,7 @@ with open('README.md') as readme_file:
 # This call to setup() does all the work
 setup_args = dict(
     name="boringproxy-api",
-    version="0.1.0",
+    version="0.2.0",
     description="Simplify boringproxy service management",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -22,7 +22,7 @@ setup_args = dict(
         "Programming Language :: Python :: 3"
     ],
     url='https://github.com/bodiroga/boringproxy-python-api',
-    download_url=''
+    download_url='https://pypi.org/project/boringproxy-api/'
 )
 
 install_requires = [
