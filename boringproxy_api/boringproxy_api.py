@@ -159,24 +159,47 @@ class BoringproxyClientAPI:
     def __init__(self, user, name):
         self.user = user
         self.name = name
-        self.registered_tunnels = {}
+        self.registered_tunnels = self.get_tunnels()
+
+    def get_tunnels(self):
+        r = requests.get(self.user.tunnels_endpoint, headers=self.user.headers)
+        soup = BeautifulSoup(r.content, "html.parser")
+        tunnels_divs = soup.find_all("div", class_="tn-tunnel-list-item")
+        tunnels = {}
+        for tunnel_div in tunnels_divs:
+            client_name = tunnel_div.find("div", string="Client:").parent.find(
+                "div", class_="tn-attribute__value").text
+            if client_name != self.name:
+                continue
+            domain = tunnel_div.find(
+                "div", string="Domain:").parent.find("a").text
+            port = tunnel_div.find("div", string="Target:").parent.find(
+                "div", class_="tn-attribute__value").text.split(":")[-1]
+            tunnels[int(port)] = domain
+        return tunnels
 
     def create_tunnel(self, port):
+        if port in self.registered_tunnels.keys():
+            logger.warning(f"Tunnel for port '{port}' already running")
+            return
         subdomain = ''.join(random.choices(
             string.ascii_lowercase + string.digits, k=15))
         domain = f"{subdomain}.{self.user.server_host}"
         if self.__create_tunnel(domain, port):
-            self.registered_tunnels[port] = domain
+            self.registered_tunnels = self.get_tunnels()
+            return domain
 
     def delete_tunnel(self, port):
-        if not port in self.registered_tunnels:
+        if not port in self.registered_tunnels.keys():
             logger.warning(f"Tunnel for port '{port}' is not running")
             return
         domain = self.registered_tunnels[port]
         endpoint = f"{self.user.delete_tunnel_endpoint}?domain={domain}"
         payload = {"domain": domain}
         r = requests.get(endpoint, headers=self.user.headers, data=payload)
-        return r.status_code == 200
+        if r.status_code == 200:
+            self.registered_tunnels = self.get_tunnels()
+            return True
 
     def __create_tunnel(self, domain, client_port, tunnel_port="Random", client_addr="127.0.0.1", tls_termination="client-tls", username=None, password=None):
         owner = self.user.user_name
