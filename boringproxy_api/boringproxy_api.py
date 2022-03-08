@@ -178,7 +178,7 @@ class BoringproxyClientAPI:
             tunnels[port] = domain
         return tunnels
 
-    def create_tunnel(self, port):
+    def create_handled_tunnel(self, port, tunnel_port="Random", client_addr="127.0.0.1", tls_termination="client", allow_external_tcp=False, password_protect=False, username=None, password=None):
         port = str(port) if isinstance(port, int) else port
         if port in self.registered_tunnels.keys():
             logger.warning(f"Tunnel for port '{port}' already running")
@@ -186,7 +186,7 @@ class BoringproxyClientAPI:
         subdomain = ''.join(random.choices(
             string.ascii_lowercase + string.digits, k=15))
         domain = f"{subdomain}.{self.user.server_host}"
-        if self.__create_tunnel(domain, port):
+        if self.__create_tunnel(domain, port, tunnel_port, client_addr, tls_termination, allow_external_tcp, password_protect, username, password):
             self.registered_tunnels = self.get_tunnels()
             return domain
 
@@ -203,12 +203,20 @@ class BoringproxyClientAPI:
             self.registered_tunnels = self.get_tunnels()
             return True
 
-    def __create_tunnel(self, domain, client_port, tunnel_port="Random", client_addr="127.0.0.1", tls_termination="client-tls", username=None, password=None):
+    def __create_tunnel(self, domain, client_port, tunnel_port="Random", client_addr="127.0.0.1", tls_termination="client", allow_external_tcp=False, password_protect=False, username=None, password=None):
         owner = self.user.user_name
         client_name = self.name
 
         payload = {"domain": domain, "owner": owner, "tunnel-port": tunnel_port, "client-name": client_name, "client-addr": client_addr,
-                   "client-port": client_port, "tls-termination": tls_termination}  # "username": username, "password": password}
+                   "client-port": client_port, "tls-termination": tls_termination}
+        if allow_external_tcp:
+            payload["allow-external-tcp"] = "on"
+        if password_protect:
+            payload["password-protect"] = "on"
+        if username:
+            payload["username"] = username
+        if password:
+            payload["password"] = password
         r = requests.post(self.user.tunnels_endpoint,
                           headers=self.user.headers, data=payload)
         return r.status_code == 200
