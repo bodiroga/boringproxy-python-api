@@ -175,10 +175,11 @@ class BoringproxyClientAPI:
                 "div", string="Domain:").parent.find("a").text
             port = tunnel_div.find("div", string="Target:").parent.find(
                 "div", class_="tn-attribute__value").text.split(":")[-1]
-            tunnels[int(port)] = domain
+            tunnels[port] = domain
         return tunnels
 
     def create_tunnel(self, port):
+        port = str(port) if isinstance(port, int) else port
         if port in self.registered_tunnels.keys():
             logger.warning(f"Tunnel for port '{port}' already running")
             return
@@ -190,6 +191,7 @@ class BoringproxyClientAPI:
             return domain
 
     def delete_tunnel(self, port):
+        port = str(port) if isinstance(port, int) else port
         if not port in self.registered_tunnels.keys():
             logger.warning(f"Tunnel for port '{port}' is not running")
             return
