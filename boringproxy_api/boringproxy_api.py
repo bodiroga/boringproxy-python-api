@@ -178,14 +178,11 @@ class BoringproxyClientAPI:
             tunnels[port] = domain
         return tunnels
 
-    def create_handled_tunnel(self, port, tunnel_port="Random", client_addr="127.0.0.1", tls_termination="client", allow_external_tcp=False, password_protect=False, username=None, password=None):
+    def create_tunnel(self, domain, port, tunnel_port="Random", client_addr="127.0.0.1", tls_termination="client", allow_external_tcp=False, password_protect=False, username=None, password=None):
         port = str(port) if isinstance(port, int) else port
         if port in self.registered_tunnels.keys():
             logger.warning(f"Tunnel for port '{port}' already running")
             return
-        subdomain = ''.join(random.choices(
-            string.ascii_lowercase + string.digits, k=15))
-        domain = f"{subdomain}.{self.user.server_host}"
         if self.__create_tunnel(domain, port, tunnel_port, client_addr, tls_termination, allow_external_tcp, password_protect, username, password):
             self.registered_tunnels = self.get_tunnels()
             return domain
